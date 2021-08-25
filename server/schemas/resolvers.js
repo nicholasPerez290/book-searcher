@@ -1,5 +1,5 @@
 const { AuthenticationError } = require('apollo-server-core');
-const { UniqueArgumentNamesRule } = require('graphql');
+const { UniqueArgumentNamesRule, locatedError } = require('graphql');
 const { User } = require('../models');
 const { signToken } = require('../utils/auth')
 
@@ -13,8 +13,8 @@ const resolvers = {
     },
     Mutation: {
         login: async (parent, { email, password }) => {
-            const user = await User.create({ email, password })
-
+            let user = await User.findOne({ email })
+            console.log(user)
             if(!user){
                 throw new AuthenticationError("No account found with this email!");
             };
@@ -29,18 +29,25 @@ const resolvers = {
             return {token, user};
         },
         addUser: async (parent, { username, email, password }) => {
-            const user = User.create({ username, email, password });
+            let user = User.create({ username, email, password });
             const token = signToken(user);
             return { token, user }
         },
-        saveBook: async (parent, { authors, description, title, bookId, image, link }, context) => {
+        saveBook: async (parent, { BookData }, context) => {
             if(!context.user){
                 throw new AuthenticationError('Cannot find a user with this id!');
             }
-            const user = await User.findOneAndUpdate(
+            let user = await User.findOneAndUpdate(
                 { _id: context.user._id },
-            { $addToSet: { savedBooks: {authors, description, title, bookId, image, link}} }
-            )
+            { $addToSet: { savedBooks: { BookData }} }
+            );
+            return user
+    },
+    removeBook: async (parent, { bookId }, context) => {
+        let user = await User.findOneAndUpdate(
+            {_id: context.user._id},
+            {$pull: {savedBooks: {bookId: bookId }} }
+        )
     }
     }
 }
