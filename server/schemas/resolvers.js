@@ -9,7 +9,8 @@ const resolvers = {
             if (context.user){
                 return User.findOne({ _id: context.user._id }).populate('savedBooks')
             }
-        },
+        }
+    },
     Mutation: {
         login: async (parent, { email, password }) => {
             const user = await User.create({ email, password })
@@ -42,7 +43,6 @@ const resolvers = {
             )
     }
     }
-}
 }
 
 module.exports = resolvers;
